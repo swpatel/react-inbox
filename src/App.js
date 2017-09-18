@@ -11,7 +11,7 @@ class App extends Component {
         {
             "id": 1,
             "subject": "You can't input the protocol without calculating the mobile RSS protocol!",
-            "read": false,
+            "read": true,
             "starred": true,
             "labels": ["dev", "personal"]
         },
@@ -26,14 +26,14 @@ class App extends Component {
         {
             "id": 3,
             "subject": "Use the 1080p HTTP feed, then you can parse the cross-platform hard drive!",
-            "read": false,
+            "read": true,
             "starred": true,
             "labels": ["dev"]
         },
         {
             "id": 4,
             "subject": "We need to program the primary TCP hard drive!",
-            "read": true,
+            "read": false,
             "starred": false,
             "selected": true,
             "labels": []
@@ -48,21 +48,21 @@ class App extends Component {
         {
             "id": 6,
             "subject": "We need to back up the wireless GB driver!",
-            "read": true,
+            "read": false,
             "starred": true,
             "labels": []
         },
         {
             "id": 7,
             "subject": "We need to index the mobile PCI bus!",
-            "read": true,
+            "read": false,
             "starred": false,
             "labels": ["dev", "personal"]
         },
         {
             "id": 8,
             "subject": "If we connect the sensor, we can get to the HDD port through the redundant IB firewall!",
-            "read": true,
+            "read": false,
             "starred": true,
             "labels": []
         }
@@ -72,28 +72,86 @@ class App extends Component {
 
     onChangeMsgSelected = (message) => {
         const messages = [...this.state.messages];
+
         messages.splice(messages.indexOf(message), 1, message);
-        this.setState({
-            messages: messages
-        });
+
+        this.setState({messages});
     }
 
-    onAddMsgLabel = (label) => {
-        const updatedMessages = [...this.state.messages]
-        Object.keys(updatedMessages).map(function (key, index) {
-            if (updatedMessages[key].labels.indexOf(label) === -1 && updatedMessages[key].selected)
-                updatedMessages[key].labels.push(label)
+    onClickMarkAsRead = (isMessageRead) => {
+        const messages = [...this.state.messages];
+
+        messages.forEach(message => message.selected ? message.read = isMessageRead : '');
+
+        this.setState({messages});
+    }
+
+    onClickMarkAsUnRead = (isMessageUnRead) => {
+        const messages = [...this.state.messages];
+
+        messages.forEach(message => message.selected ? message.read = isMessageUnRead : '');
+
+        this.setState({messages});
+    }
+
+    onChangeAddLabel = (e) => {
+        const messages = [...this.state.messages];
+
+        messages.forEach(message => {
+            if (message.selected ) {
+                if (!message.labels.includes(e.target.value)) {
+                    message.labels.push(e.target.value);
+                }
+            }
         });
+
+        this.setState({messages});
+
+    }
+
+    onChangeRemoveLabel = (e) => {
+        const messages = [...this.state.messages];
+
+        messages.forEach(message => {
+            if (message.selected ) {
+                if (message.labels.includes(e.target.value)) {
+                   message.labels =  message.labels.filter((label) => label !== e.target.value);
+                }
+            }
+        });
+
+        this.setState({messages});
+
+    }
+
+    onBulkSelectCheck = isAllSelected  => {
+        const messages = [...this.state.messages];
+
         this.setState({
-            messages: updatedMessages
+            messages: messages.forEach(message => message.selected = isAllSelected)
         });
+
+    }
+
+    onDeleteMessages = ()  => {
+
+        const messages = [...this.state.messages];
+
+        this.setState({ messages: messages.filter(message => !message.selected) });
+
     }
 
     render() {
         return (
             <div>
                 <ToolBar messages={this.state.messages}
-                         onAddMsgLabel={this.onAddMsgLabel}
+                         onClickMarkAsRead={this.onClickMarkAsRead}
+                         onClickMarkAsUnRead={this.onClickMarkAsUnRead}
+                         onChangeAddLabel={this.onChangeAddLabel}
+                         onChangeRemoveLabel={this.onChangeRemoveLabel}
+                         onBulkSelectCheck={this.onBulkSelectCheck}
+                         onDeleteMessages={this.onDeleteMessages}
+
                 />
                 <Messages messages={this.state.messages} onChangeHandler={this.onChangeMsgSelected}/>
 

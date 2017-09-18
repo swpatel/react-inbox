@@ -3,18 +3,13 @@ import React from 'react';
 const Message = ({message, onChange}) => {
 
     const onChangeEvent = (event) => {
-        console.log('here..');
-        event.preventDefault();
-        let msg = message;
-        msg.selected = event.target.checked;
-        onChange(msg);
+        message.selected = event.target.checked;
+        onChange(message);
     }
 
-    const onClickEvent = (event) => {
-        event.preventDefault();
-        let msg = message;
-        msg.starred = !message.starred;
-        onChange(msg);
+    const onClickEvent = () => {
+        message.starred = !message.starred;
+        onChange(message);
     }
 
     return (
