@@ -1,7 +1,8 @@
 import React from 'react';
 
 const ToolBar = (
-        {messages, onClickMarkAsRead, onClickMarkAsUnRead, onChangeAddLabel, onChangeRemoveLabel, onBulkSelectCheck,onDeleteMessages
+        {messages, onClickMarkAsRead, onClickMarkAsUnRead, onChangeAddLabel,
+            onChangeRemoveLabel, onBulkSelectCheck, onDeleteMessages, onShowHideComposeForm
         }) => {
 
     const unReadMessagesCount = () => {
@@ -20,13 +21,13 @@ const ToolBar = (
     }
 
     const onChgAddLabel = (e) => {
-        console.log('selected value to Add-->', e.target.value);
-        onChangeAddLabel(e);
+        onChangeAddLabel(e.target.value);
+        e.target.selectedIndex = 0;
     }
 
     const onChgRemoveLabel = (e) => {
-        console.log('selected value to remove-->', e.target.value);
-        onChangeRemoveLabel(e);
+        onChangeRemoveLabel(e.target.value);
+        e.target.selectedIndex = 0;
     }
 
 
@@ -45,6 +46,10 @@ const ToolBar = (
                     <span className="badge badge">{unReadMessagesCount()}</span>
                     unread message{unReadMessagesCount()>1?'s':''}
                 </p>
+
+                <button className="btn btn-danger" onClick={onShowHideComposeForm}>
+                    <i className={`fa fa-plus`}></i>
+                </button>
 
                 <button className="btn btn-default"
                     onClick={onBulkSelectCheck}>

@@ -2,14 +2,12 @@ import React from 'react';
 
 const Message = ({message, onChange}) => {
 
-    const onChangeEvent = (event) => {
-        message.selected = event.target.checked;
-        onChange(message);
+    const onChangeEvent = () => {
+        onChange(message, 'selected');
     }
 
     const onClickEvent = () => {
-        message.starred = !message.starred;
-        onChange(message);
+        onChange(message, 'starred');
     }
 
     return (
@@ -31,8 +29,7 @@ const Message = ({message, onChange}) => {
                 </div>
             </div>
             <div className="col-xs-11">
-                <span className="label label-warning">{message.labels[0]}</span>
-                <span className="label label-warning">{message.labels[1]}</span>
+                {message.labels.map((label,i)=> <span key={i} className="label label-warning"> {label} </span>)}
                 <a href="#">
                     {message.subject}
                 </a>

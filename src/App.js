@@ -3,123 +3,124 @@ import './App.css';
 
 import ToolBar from './components/ToolBar';
 import Messages from './components/Messages';
+import ComposeForm from './components/ComposeForm';
 
 class App extends Component {
 
-    const
-    seedData = [
+    state = {messages: []};
+
+    async componentDidMount() {
+        const response = await fetch(`/api/messages`);
+        const json = await response.json();
+        this.setState({messages: json._embedded.messages});
+    }
+
+
+    async callApi(path, method, body){
+         return await fetch(path, {
+            method: method,
+            body: JSON.stringify(body),
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            }
+        })
+    }
+
+    async updateMessages(request) {
+        await this.callApi('/api/messages', 'PATCH', request)
+    }
+
+    async addMessage(request) {
+        await this.callApi('/api/messages', 'POST', request)
+    }
+
+    async toggleStar(message) {
+        await this.updateMessages({
+            "messageIds": [message.id],
+            "command": "star",
+            "star": message.starred
+        })
+
+    }
+
+    onChangeMsgSelected = (message, action) => {
+        const messages = [...this.state.messages];
+        if (action === 'starred')
         {
-            "id": 1,
-            "subject": "You can't input the protocol without calculating the mobile RSS protocol!",
-            "read": true,
-            "starred": true,
-            "labels": ["dev", "personal"]
-        },
-        {
-            "id": 2,
-            "subject": "connecting the system won't do anything, we need to input the mobile AI panel!",
-            "read": false,
-            "starred": false,
-            "selected": true,
-            "labels": []
-        },
-        {
-            "id": 3,
-            "subject": "Use the 1080p HTTP feed, then you can parse the cross-platform hard drive!",
-            "read": true,
-            "starred": true,
-            "labels": ["dev"]
-        },
-        {
-            "id": 4,
-            "subject": "We need to program the primary TCP hard drive!",
-            "read": false,
-            "starred": false,
-            "selected": true,
-            "labels": []
-        },
-        {
-            "id": 5,
-            "subject": "If we override the interface, we can get to the HTTP feed through the virtual EXE interface!",
-            "read": false,
-            "starred": false,
-            "labels": ["personal"]
-        },
-        {
-            "id": 6,
-            "subject": "We need to back up the wireless GB driver!",
-            "read": false,
-            "starred": true,
-            "labels": []
-        },
-        {
-            "id": 7,
-            "subject": "We need to index the mobile PCI bus!",
-            "read": false,
-            "starred": false,
-            "labels": ["dev", "personal"]
-        },
-        {
-            "id": 8,
-            "subject": "If we connect the sensor, we can get to the HDD port through the redundant IB firewall!",
-            "read": false,
-            "starred": true,
-            "labels": []
+            this.toggleStar(message);
         }
-    ]
 
-    state = {messages: this.seedData};
-
-    onChangeMsgSelected = (message) => {
-        const messages = [...this.state.messages];
-
-        messages.splice(messages.indexOf(message), 1, message);
+        messages.splice(messages.indexOf(message), 1, {...message, [action]:!message[action]});
 
         this.setState({messages});
     }
 
-    onClickMarkAsRead = (isMessageRead) => {
-        const messages = [...this.state.messages];
+    async onClickMarkAsRead (isMessageRead){
+        await this.updateMessages({
+            "messageIds": this.state.messages.filter(message => message.selected).map(message => message.id),
+            "command": "read",
+            "read": isMessageRead
+        })
 
-        messages.forEach(message => message.selected ? message.read = isMessageRead : '');
+        this.setState({
+            messages: this.state.messages.map(message => (
+                message.selected ? { ...message, read: isMessageRead } : message
+            ))
+        })
+    }
 
+    async onClickMarkAsUnRead (isMessageUnRead){
+        await this.updateMessages({
+            "messageIds": this.state.messages.filter(message => message.selected).map(message => message.id),
+            "command": "read",
+            "read": isMessageUnRead
+        })
+
+        this.setState({
+            messages: this.state.messages.map(message => (
+                message.selected ? { ...message, read: isMessageUnRead } : message
+            ))
+        })
+    }
+
+    async onChangeAddLabel (label){
+
+        await this.updateMessages({
+            "messageIds": this.state.messages.filter(message => message.selected).map(message => message.id),
+            "command": "addLabel",
+            "label": label
+        })
+        const messages = this.state.messages.map(message => {
+            if (message.selected ) {
+                if (!message.labels.includes(label)) {
+                    return {...message,
+                        labels:[...message.labels, label]
+                    };
+                }
+            }
+            return message;
+        });
         this.setState({messages});
     }
 
-    onClickMarkAsUnRead = (isMessageUnRead) => {
-        const messages = [...this.state.messages];
+    async onChangeRemoveLabel (label) {
 
-        messages.forEach(message => message.selected ? message.read = isMessageUnRead : '');
+        await this.updateMessages({
+            "messageIds": this.state.messages.filter(message => message.selected).map(message => message.id),
+            "command": "removeLabel",
+            "label": label
+        })
 
-        this.setState({messages});
-    }
-
-    onChangeAddLabel = (e) => {
         const messages = [...this.state.messages];
 
         messages.forEach(message => {
             if (message.selected ) {
-                if (!message.labels.includes(e.target.value)) {
-                    message.labels.push(e.target.value);
+                if (message.labels.includes(label)) {
+                   message.labels =  message.labels.filter((label) => label !== label);
                 }
             }
         });
-
-        this.setState({messages});
-
-    }
-
-    onChangeRemoveLabel = (e) => {
-        const messages = [...this.state.messages];
-
-        messages.forEach(message => {
-            if (message.selected ) {
-                if (message.labels.includes(e.target.value)) {
-                   message.labels =  message.labels.filter((label) => label !== e.target.value);
-                }
-            }
-        });
-
         this.setState({messages});
 
     }
@@ -133,27 +134,60 @@ class App extends Component {
 
     }
 
-    onDeleteMessages = ()  => {
+    async onDeleteMessages() {
+        await this.updateMessages({
+            "messageIds": this.state.messages.filter(message => message.selected).map(message => message.id),
+            "command": "delete",
+        })
+
+        this.setState({ messages: this.state.messages.filter(message => !message.selected) });
+    }
+
+    onShowHideComposeForm() {
+        this.setState({showHideComposeForm: !this.state.showHideComposeForm});
+    }
+
+    async onAddMessage(subject, body) {
+        await this.addMessage('/api/messages', 'POST', {
+            subject: subject,
+            body: body,
+        })
 
         const messages = [...this.state.messages];
 
-        this.setState({ messages: messages.filter(message => !message.selected) });
+        const message = {
+            "id": messages.length + 1,
+            "subject": subject,
+            "read": false,
+            "starred": false,
+            "labels": []
+        }
 
+        messages.push(message);
+
+        this.setState({
+            messages,
+            showHideComposeForm: false,
+        })
     }
 
     render() {
         return (
             <div>
                 <ToolBar messages={this.state.messages}
-                         onClickMarkAsRead={this.onClickMarkAsRead}
-                         onClickMarkAsUnRead={this.onClickMarkAsUnRead}
-                         onChangeAddLabel={this.onChangeAddLabel}
-                         onChangeRemoveLabel={this.onChangeRemoveLabel}
-                         onBulkSelectCheck={this.onBulkSelectCheck}
-                         onDeleteMessages={this.onDeleteMessages}
+                         onClickMarkAsRead={this.onClickMarkAsRead.bind(this)}
+                         onClickMarkAsUnRead={this.onClickMarkAsUnRead.bind(this)}
+                         onChangeAddLabel={this.onChangeAddLabel.bind(this)}
+                         onChangeRemoveLabel={this.onChangeRemoveLabel.bind(this)}
+                         onBulkSelectCheck={this.onBulkSelectCheck.bind(this)}
+                         onDeleteMessages={this.onDeleteMessages.bind(this)}
+                         onShowHideComposeForm={this.onShowHideComposeForm.bind(this)}
 
                 />
-                <Messages messages={this.state.messages} onChangeHandler={this.onChangeMsgSelected}/>
+                {this.state.showHideComposeForm &&
+                    <ComposeForm onAddMessage={this.onAddMessage.bind(this)}/>
+                }
+                <Messages messages={this.state.messages} onChangeHandler={this.onChangeMsgSelected.bind(this)}/>
 
             </div>
         );
